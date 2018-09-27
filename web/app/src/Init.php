@@ -22,11 +22,11 @@ final class Init
         /**
          * @var string имя пользователя
          */
-        private $user = "root";
+        private $user = "dev";
         /**
          * @var string пароль для пользователя
          */
-        private $pass = "root";
+        private $pass = "dev";
         /**
          * @var string имя базы данных
          */
