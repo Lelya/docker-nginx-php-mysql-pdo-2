@@ -15,7 +15,11 @@ $init = new App\Acme\Init();
         <title>Test</title>
     </head>
     <body>
-        <h4>Выборка из таблицы test данных по критерию: result среди значений 'normal' и'success';</h4>
+        <h4>Нужно хранить свою библиотеку в БД. Хранятся только названия книг и авторы. У
+                одной книги может быть несколько авторов, у одного автора может быть несколько книг.</h4>
+        <h4>Предложите структуру таблиц и напишите SQL запрос получающий список книг, которые
+                написаны 3-мя и более со-авторами (то есть получить отчет «книга — количество
+                соавторов»).</h4>
         <?php
 
         $result = $init->get();
@@ -24,17 +28,14 @@ $init = new App\Acme\Init();
          * Вывод на страничку в виде таблицы
          */
         echo "<table border=1>
-                <tr><th>id</th><th>script_name</th><th>sort_index</th><th>start_time</th><th>result</th></tr>";
+                <tr><th>Название книги</th><th>Количество соавторов</th></tr>";
 
                 //вывод построчно
                 for($i = 0; $i < count($result); $i++){
                         echo
                         "<tr>
-                                <td>".$result[$i]['ID']."</td>
-                                <td>".$result[$i]['script_name']."</td>
-                                <td>".$result[$i]['sort_index']."</td>
-                                <td>".$result[$i]['start_time']."</td>
-                                <td>".$result[$i]['result']."</td>
+                                <td>".$result[$i]['book_name']."</td>
+                                <td>".$result[$i]['number']."</td>
                         </tr>";
                 }
                         echo "</table>";
