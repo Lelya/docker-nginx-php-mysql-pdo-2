@@ -22,15 +22,15 @@ final class Init
         /**
          * @var string имя пользователя
          */
-        private $user = "dev";
+        private $user = "root";
         /**
          * @var string пароль для пользователя
          */
-        private $pass = "dev";
+        private $pass = "root";
         /**
          * @var string имя базы данных
          */
-        private $database = "test";
+        private $database = "main";
         /**
          * @var \PDO соединение с базой
          */
@@ -39,7 +39,7 @@ final class Init
 
         function __construct() {
                 try {
-                        $this->connection = new PDO("mysql:host={$this->host};dbname={$this->database};", $this->user, $this->pass);
+                        $this->connection = new PDO("mysql:host={$this->host};dbname={$this->database};charset=utf8", $this->user, $this->pass);
                         $this->connection->SetAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 }
                 catch (PDOException $e) {
@@ -50,49 +50,94 @@ final class Init
         }
 
         /**
-         * Создает таблицу test, содержащую 5 полей
-         *   - id целое, автоинкрементарное;
-         *   - script_name строковое, длиной 25 символов;
-         *   - start_time timestamp с автозаполнением;
-         *   - sort_index целое (значения не превышают 3-х разрядов);
-         *   - result один вариант из 'normal', 'illegal', 'failed', 'success';
+         * Создает таблицу books, содержащую 2 поля
+         *   - book_id целое, автоинкрементарное;
+         *   - book_name строковое, длиной 25 символов - название книги;
+         *
+         * Создает таблицу authors, содержащую 2 поля
+         *   - authors_id целое, автоинкрементарное;
+         *   - author_name строковое, длиной 35 символов - автор;
+         *
+         * Создает таблицу book_autor, содержащую 2 поля
+         *   - book_id целое;
+         *   - authors_id целое;
          */
         private function create()
         {
-                //запрос на создание таблицы
-                $query = $this->connection->prepare("CREATE TABLE IF NOT EXISTS `test` (
-                        `ID` INT NOT NULL AUTO_INCREMENT,
-                        `script_name` varchar(25),
-                        `start_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        `sort_index` INT,
-                        `result` ENUM('normal', 'illegal', 'failed', 'success'),
-                        PRIMARY KEY(`ID`))");
+                //запрос на создание таблиц
+                $query = $this->connection->prepare("CREATE TABLE IF NOT EXISTS `books` (
+                        `book_id` INT NOT NULL AUTO_INCREMENT,
+                        `book_name` TEXT NOT NULL,
+                        PRIMARY KEY(`book_id`))");
+                $query->execute();
+
+                $query = $this->connection->prepare("CREATE TABLE IF NOT EXISTS `authors` (
+                        `author_id` INT NOT NULL AUTO_INCREMENT,
+                        `author_name` varchar(35) NOT NULL,
+                        PRIMARY KEY(`author_id`))");
+                $query->execute();
+
+                $query = $this->connection->prepare("CREATE TABLE IF NOT EXISTS book_author (
+                        PRIMARY KEY (book_id , author_id ),
+                        author_id INT NOT NULL REFERENCES authors(author_id),
+                        book_id INT NOT NULL REFERENCES books(book_id) )");
                 $query->execute();
 
         }
 
         /**
-         * Заполняет таблицу test случайными данными;
+         * Заполняет таблицы books, authors, book_author ;
          */
         private function fill()
         {
-                $array_result = array("normal", "success", "illegal", "failed");
+                //очищаем таблицы
+                $statement = $this->connection->prepare('TRUNCATE TABLE books');
+                $statement->execute();
+                $statement = $this->connection->prepare('TRUNCATE TABLE authors');
+                $statement->execute();
+                $statement = $this->connection->prepare('TRUNCATE TABLE book_author');
+                $statement->execute();
 
-                for ($i = 1; $i <= 50; $i++) {
+                //книги
+                $statement = $this->connection->prepare('INSERT INTO books (book_name)
+                              VALUES ("Двенадцать стульев. Золотой теленок."),
+                                     ("Заклинатели"),
+                                     ("Республика Шкид"),
+                                     ("Физическая химия неводных растворов"),
+                                     ("Веселый трамвай"),
+                                     ("Ю. Н. Вторичные эталоны единиц измерений ионизирующих излучений")');
+                $statement->execute();
 
-                        $rand_result = array_rand($array_result, 2);
-                        $rand_scriptname = substr(md5(microtime()),rand(0,26),10);
-                        $rand_sortindex = rand(0, 999);
+                //авторы
+                $statement = $this->connection->prepare('INSERT INTO authors (author_name)
+                              VALUES ("Ильф И."),
+                                     ("Петров Е."),
+                                     ("Алексей Пехов"),
+                                     ("Елена Бычкова"),
+                                     ("Наталья Турчанинов"),
+                                     ("Белых Г."),
+                                     ("Пантелеев Л."),
+                                     ("Н. Я. Фиалков"),
+                                     ("А. Н. Житомирский"),
+                                     ("Ю. Н. Тарасенко.")');
+                $statement->execute();
 
-                        $statement = $this->connection->prepare('INSERT INTO test (script_name, sort_index, result)
-                              VALUES (:script_name, :sort_index, :result)');
+                //связи
+                $statement = $this->connection->prepare('INSERT INTO book_author (author_id, book_id)
+                              VALUES (1,1),
+                                     (2,1),
+                                     (3,2),
+                                     (4,2),
+                                     (5,2),
+                                     (6,3),
+                                     (7,3),
+                                     (8,4),
+                                     (9,4),
+                                     (10,4),
+                                     (7,5),
+                                     (10,6)');
+                $statement->execute();
 
-                        $statement->execute([
-                                'script_name' => $rand_scriptname,
-                                'sort_index' => $rand_sortindex,
-                                'result' => $array_result[$rand_result[0]]
-                        ]);
-                }
         }
 
         /**
@@ -101,7 +146,10 @@ final class Init
          */
         public function get()
         {
-                $statement = $this->connection->prepare("SELECT * FROM test WHERE result IN ('normal','success')");
+                $statement = $this->connection->prepare("SELECT books.book_name, COUNT(authors.author_id ) AS number FROM books
+                                INNER JOIN book_author ON books.book_id = book_author.book_id
+                                LEFT JOIN authors ON book_author.author_id = authors.author_id
+                                GROUP BY book_author.book_id HAVING count(1)>=3");
                 $statement->execute();
 
                 $data = $statement->fetchAll(PDO::FETCH_ASSOC);
