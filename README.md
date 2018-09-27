@@ -70,7 +70,6 @@ cd docker-nginx-php-mysql-pdo-2
 │   └── db
 │       ├── dumps
 │       └── mysql
-├── doc
 ├── docker-compose.yml
 ├── etc
 │   ├── nginx
