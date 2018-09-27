@@ -1,4 +1,4 @@
-# Nginx PHP MySQL PDO
+# Nginx PHP MySQL PDO 2
 
 Docker с Nginx, PHP-FPM, Composer, MySQL, PDO and PHPMyAdmin.
 
